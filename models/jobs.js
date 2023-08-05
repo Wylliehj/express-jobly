@@ -30,7 +30,7 @@ class Job {
           `INSERT INTO jobs
            (title, salary, equity, company_handle)
            VALUES ($1, $2, $3, $4)
-           RETURNING id, title, salary, equity, company_handle AS "companyHandle`,
+           RETURNING id, title, salary, equity, company_handle AS "companyHandle"`,
         [
           title,
           salary,
@@ -57,7 +57,8 @@ class Job {
                   company_handle AS "companyHandle"
            FROM jobs
            ORDER BY id`);
-    return jobsRes.rows;
+    console.log(jobRes.rows)
+    return jobRes.rows;
   }
 
   /** Find all companies based on passed parameters.
@@ -69,44 +70,58 @@ class Job {
    */
   static async find(parameters) {
     let query = `WHERE `;
-    Object.keys(parameters).forEach((key, idx) => {
-        if(key == 'title'){
-            if(idx == 0){
-                query += `title ILIKE '%${parameters[key]}%'`
-            }else{
-                query += ` AND title ILIKE '%${parameters[key]}%`
-            }
-        }else if(key == 'minSalary'){
-            if(idx == 0){
-                query += `salary >= '%${parameters[key]}%'`
-            }else{
-                query += ` AND salary >= '%${parameters[key]}%'`
-            }
-        }else if(key == 'hasEquity'){
-            if(idx == 0){
-                if(parameters[key]){
-                    query += `equity > 0`
-                }
-            }else{
-                if(parameters[key]){
-                    query += ` AND equity > 0`
-                }
-            }
-        }
-    }) 
-    if(query == 'WHERE '){
-      query = ''
+    if(!parameters){
+      query = '';
+      const jobsRes = await db.query(
+        `SELECT id,
+                title,
+                salary,
+                equity,
+                company_handle AS "companyHandle"
+         FROM jobs
+         ${query}
+         ORDER BY id`);
+return jobsRes.rows
+    }else{
+      Object.keys(parameters).forEach((key, idx) => {
+          if(key == 'title'){
+              if(idx == 0){
+                  query += `title ILIKE '%${parameters[key]}%'`
+              }else{
+                  query += ` AND title ILIKE '%${parameters[key]}%`
+              }
+          }else if(key == 'minSalary'){
+              if(idx == 0){
+                  query += `salary >= ${parameters[key]}`
+              }else{
+                  query += ` AND salary >= ${parameters[key]}`
+              }
+          }else if(key == 'hasEquity'){
+              if(idx == 0){
+                  if(parameters[key]){
+                      query += `equity > 0`
+                  }
+              }else{
+                  if(parameters[key]){
+                      query += ` AND equity > 0`
+                  }
+              }
+          }
+      }) 
+      if(query == 'WHERE '){
+        query = ''
+      }
+      const jobsRes = await db.query(
+              `SELECT id,
+                      title,
+                      salary,
+                      equity,
+                      company_handle AS "companyHandle"
+              FROM jobs
+              ${query}
+              ORDER BY id`);
+      return jobsRes.rows
     }
-    const jobsRes = await db.query(
-            `SELECT id,
-                    title,
-                    salary,
-                    equity,
-                    company_handle AS "companyHandle"
-             FROM jobs
-             ${query}
-             ORDER BY id`);
-    return jobsRes.rows
   }
 
   /** Given a company handle, return data about company.
@@ -122,13 +137,13 @@ class Job {
           `SELECT id, 
                   title,
                   salary,
-                  equity
+                  equity,
                   company_handle AS "companyHandle"
            FROM jobs
            WHERE id = $1`,
         [id]);
 
-    const job = companyRes.rows[0];
+    const job = jobRes.rows[0];
 
     if (!job) throw new NotFoundError(`No job with id: ${id}`);
 
@@ -149,27 +164,23 @@ class Job {
 
   static async update(id, data) {
     const { setCols, values } = sqlForPartialUpdate(
-        data,
-        {
-          numEmployees: "num_employees",
-          logoUrl: "logo_url",
-        });
-    const handleVarIdx = "$" + (values.length + 1);
+        data, {
+          salary: "salary",
+          equity: "equity"
+        })
 
-    const querySql = `UPDATE companies 
+        const handleVarIdx = "$" + (values.length + 1);
+
+    const querySql = `UPDATE jobs 
                       SET ${setCols} 
-                      WHERE handle = ${handleVarIdx} 
-                      RETURNING handle, 
-                                name, 
-                                description, 
-                                num_employees AS "numEmployees", 
-                                logo_url AS "logoUrl"`;
-    const result = await db.query(querySql, [...values, handle]);
-    const company = result.rows[0];
+                      WHERE id = ${handleVarIdx} 
+                      RETURNING id, title, salary, equity, company_handle AS "companyHandle"`;
+    const result = await db.query(querySql, [...values, id]);
+    const job = result.rows[0];
 
-    if (!company) throw new NotFoundError(`No company: ${handle}`);
+    if (!job) throw new NotFoundError(`No job: ${id}`);
 
-    return company;
+    return job;
   }
 
   /** Delete given company from database; returns undefined.
@@ -177,16 +188,16 @@ class Job {
    * Throws NotFoundError if company not found.
    **/
 
-  static async remove(handle) {
+  static async remove(id) {
     const result = await db.query(
           `DELETE
-           FROM companies
-           WHERE handle = $1
-           RETURNING handle`,
-        [handle]);
-    const company = result.rows[0];
+           FROM jobs
+           WHERE id = $1
+           RETURNING id, title`,
+        [id]);
+    const job = result.rows[0];
 
-    if (!company) throw new NotFoundError(`No company: ${handle}`);
+    if (!job) throw new NotFoundError(`No job: ${id}`);
   }
 }
 

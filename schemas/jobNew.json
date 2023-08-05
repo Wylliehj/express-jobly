@@ -1,0 +1,51 @@
+{
+    "$schema": "https://json-schema.org/draft/2019-09/schema",
+    "$id": "http://example.com/example.json",
+    "type": "object",
+    "default": {},
+    "title": "Root Schema",
+    "required": [
+        "title",
+        "companyHandle"
+    ],
+    "properties": {
+        "title": {
+            "type": "string",
+            "default": "",
+            "title": "The title Schema",
+            "examples": [
+                "company"
+            ]
+        },
+        "equity": {
+            "type": "integer",
+            "default": 0,
+            "title": "The equity Schema",
+            "examples": [
+                0.50
+            ]
+        },
+        "salary": {
+            "type": "integer",
+            "default": 0,
+            "title": "The salary Schema",
+            "examples": [
+                50000
+            ]
+        },
+        "companyHandle": {
+            "type": "string",
+            "default": "",
+            "title": "The companyHandle Schema",
+            "examples": [
+                "c1"
+            ]
+        }
+    },
+    "examples": [{
+        "title": "company",
+        "equity": 0.50,
+        "salary": 50000,
+        "companyHandle": "c1"
+    }]
+}

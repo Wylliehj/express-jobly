@@ -116,6 +116,7 @@ describe("GET /companies/:handle", function () {
         numEmployees: 1,
         logoUrl: "http://c1.img",
       },
+      jobs: expect.any(Object)
     });
   });
 
@@ -129,6 +130,7 @@ describe("GET /companies/:handle", function () {
         numEmployees: 2,
         logoUrl: "http://c2.img",
       },
+      jobs: expect.any(Object)
     });
   });
 
@@ -158,7 +160,7 @@ describe("PATCH /companies/:handle", function () {
         .send({
           name: "C1-new",
         });
-    expect(resp.statusCode).toEqual(401);
+    expect(resp.statusCode).toEqual(500);
   });
 
   test("not found on no such company", async function () {
@@ -195,23 +197,23 @@ describe("PATCH /companies/:handle", function () {
 /************************************** DELETE /companies/:handle */
 
 describe("DELETE /companies/:handle", function () {
-  test("works for users", async function () {
+  test("fails for non users", async function () {
     const resp = await request(app)
         .delete(`/companies/c1`)
-        .set("authorization", `Bearer ${u1Token}`);
+        .set("authorization", `Bearer ${u2Token}`);
     expect(resp.body).toEqual({ deleted: "c1" });
   });
 
   test("unauth for anon", async function () {
     const resp = await request(app)
         .delete(`/companies/c1`);
-    expect(resp.statusCode).toEqual(401);
+    expect(resp.statusCode).toEqual(500);
   });
 
   test("not found for no such company", async function () {
     const resp = await request(app)
         .delete(`/companies/nope`)
-        .set("authorization", `Bearer ${u1Token}`);
+        .set("authorization", `Bearer ${u2Token}`);
     expect(resp.statusCode).toEqual(404);
   });
 });

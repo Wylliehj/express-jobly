@@ -24,7 +24,7 @@ const router = express.Router();
  * This returns the newly created user and an authentication token for them:
  *  {user: { username, firstName, lastName, email, isAdmin }, token }
  *
- * Authorization required: login
+ * Authorization required: Admin
  **/
 
 router.post("/", ensureAdmin, async function (req, res, next) {
@@ -42,6 +42,15 @@ router.post("/", ensureAdmin, async function (req, res, next) {
     return next(err);
   }
 });
+
+router.post('/:username/jobs/:id', ensureLoggedIn, async (req, res, next) => {
+  try{
+    const application = await User.apply(req.params.username, req.params.id)
+    return res.json({application})
+  }catch(e){
+    return next(e)
+  }
+})
 
 
 /** GET / => { users: [ {username, firstName, lastName, email }, ... ] }
